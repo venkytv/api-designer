@@ -3,6 +3,29 @@
 
   angular.module('ramlEditorApp')
     .constant('UPDATE_RESPONSIVENESS_INTERVAL', 800)
+    .directive('ramlIncludeLink', function($compile, $rootScope, ramlRepository){
+      function relativeToAbsolutePath (path, parent) {
+        return parent.path === '/' ?
+          parent.path + path :
+          parent.path + '/' + path;
+      }
+
+      return {
+        restrict: 'A',
+        link: function(scope, elm) {
+          var path = elm[0].innerText;
+
+          if (path.charAt(0) !== '/') {
+            path = relativeToAbsolutePath(path, ramlRepository.getParent($rootScope.fileBrowser.selectedFile));
+          }
+
+          var action = 'fileBrowser.selectWithPath("' + path + '")';
+          elm.attr('ng-click', action);
+          elm.removeAttr('raml-include-link');
+          $compile(elm)(scope);
+        }
+      };
+    })
     .service('ramlParserFileReader', function ($http, $q, ramlParser, ramlRepository, safeApplyWrapper) {
       function readLocFile(path) {
         return ramlRepository.loadFile({path: path}).then(
@@ -48,7 +71,7 @@
     })
     .controller('ramlEditorMain', function (UPDATE_RESPONSIVENESS_INTERVAL, $scope, $rootScope, $timeout, $window,
       safeApply, safeApplyWrapper, debounce, throttle, ramlHint, ramlParser, ramlParserFileReader, ramlRepository, eventService, codeMirror,
-      codeMirrorErrors, config, $prompt, $confirm, $modal
+      codeMirrorErrors, config, $prompt, $confirm, $modal, $compile
     ) {
       var editor, lineOfCurrentError, currentFile;
 
@@ -87,6 +110,17 @@
         }
 
         return 'Error on line ' + (actualLine + 1) + ': ' + message;
+      }
+
+      function enableIncludeLinks () {
+        var includeLinks = document.getElementsByClassName('cm-include-path');
+        var att = document.createAttribute('raml-include-link');
+
+        // attach raml-include-link directive to the elements
+        for (var i = 0; i < includeLinks.length; i++) {
+          includeLinks[i].setAttributeNode(att);
+          $compile(includeLinks[i])($scope);
+        }
       }
 
       $window.setTheme = function setTheme(theme) {
@@ -292,6 +326,7 @@
 
         editor.on('change', debounce(function onChange() {
           $scope.sourceUpdated();
+          enableIncludeLinks();
         }, config.get('updateResponsivenessInterval', UPDATE_RESPONSIVENESS_INTERVAL)));
 
         // Warn before leaving the page

@@ -22,7 +22,33 @@
           }
         };
 
+        mode.includeHighlightOverlay = {
+          token: function(stream, state) {
+            if (state.foundInclude) {
+              stream.skipToEnd();
+              // reset the state
+              state.foundInclude = false;
+              return 'include-path';
+            }
+
+            if (stream.match('!include')) {
+              // skip all the white spaces
+              while(stream.eatSpace()) {}
+              state.foundInclude = true;
+              return null;
+            }
+
+            // search forward for the '!include token'
+            while (stream.next() && !stream.match('!include', false)) {}
+            return null;
+          },
+          startState: function startState() {
+            return { foundInclude: false };
+          }
+        };
+
         mode.yaml     = CodeMirror.overlayMode(CodeMirror.getMode(config, 'yaml'), mode.indentationOverlay);
+        mode.yaml     = CodeMirror.overlayMode(mode.yaml, mode.includeHighlightOverlay);
         mode.xml      = CodeMirror.overlayMode(CodeMirror.getMode(config, 'xml'), mode.indentationOverlay);
         mode.json     = CodeMirror.overlayMode(CodeMirror.getMode(config, { name: 'javascript', json: true }), mode.indentationOverlay);
         mode.markdown = CodeMirror.overlayMode(CodeMirror.getMode(config, 'gfm'), mode.indentationOverlay);
