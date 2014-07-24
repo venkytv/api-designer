@@ -3,29 +3,6 @@
 
   angular.module('ramlEditorApp')
     .constant('UPDATE_RESPONSIVENESS_INTERVAL', 800)
-    .directive('ramlIncludeLink', function($compile, $rootScope, ramlRepository){
-      function relativeToAbsolutePath (path, parent) {
-        return parent.path === '/' ?
-          parent.path + path :
-          parent.path + '/' + path;
-      }
-
-      return {
-        restrict: 'A',
-        link: function(scope, elm) {
-          var path = elm[0].innerText;
-
-          if (path.charAt(0) !== '/') {
-            path = relativeToAbsolutePath(path, ramlRepository.getParent($rootScope.fileBrowser.selectedFile));
-          }
-
-          var action = 'fileBrowser.selectWithPath("' + path + '")';
-          elm.attr('ng-click', action);
-          elm.removeAttr('raml-include-link');
-          $compile(elm)(scope);
-        }
-      };
-    })
     .service('ramlParserFileReader', function ($http, $q, ramlParser, ramlRepository, safeApplyWrapper) {
       function readLocFile(path) {
         return ramlRepository.loadFile({path: path}).then(
@@ -114,11 +91,10 @@
 
       function enableIncludeLinks () {
         var includeLinks = document.getElementsByClassName('cm-include-path');
-        var att = document.createAttribute('raml-include-link');
 
         // attach raml-include-link directive to the elements
         for (var i = 0; i < includeLinks.length; i++) {
-          includeLinks[i].setAttributeNode(att);
+          includeLinks[i].setAttributeNode(document.createAttribute('raml-editor-include-link'));
           $compile(includeLinks[i])($scope);
         }
       }

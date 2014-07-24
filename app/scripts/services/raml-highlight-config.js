@@ -2,6 +2,30 @@
   'use strict';
 
   angular.module('codeMirror')
+    .directive('ramlEditorIncludeLink', function($compile, $rootScope, ramlRepository){
+      function relativeToAbsolutePath (path, parent) {
+        return parent.path === '/' ?
+          parent.path + path :
+          parent.path + '/' + path;
+      }
+
+      return {
+        restrict: 'A',
+        link: function(scope, elm) {
+          var path = elm[0].innerText;
+
+          // convert to absolute pathnames
+          if (path.charAt(0) !== '/') {
+            path = relativeToAbsolutePath(path, ramlRepository.getParent($rootScope.fileBrowser.selectedFile));
+          }
+
+          var action = 'fileBrowser.selectWithPath("' + path + '")';
+          elm.attr('ng-click', action);
+          elm.removeAttr('raml-editor-include-link');
+          $compile(elm)(scope);
+        }
+      };
+    })
     .factory('codeMirrorHighLight', function (indentUnit) {
       var mode = {};
 
