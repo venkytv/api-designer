@@ -2,27 +2,40 @@
   'use strict';
 
   angular.module('codeMirror')
-    .directive('ramlEditorIncludeLink', function($compile, $rootScope, ramlRepository){
-      function relativeToAbsolutePath (path, parent) {
-        return parent.path === '/' ?
-          parent.path + path :
-          parent.path + '/' + path;
+    .directive('cmIncludeLink', function($compile, $rootScope, ramlRepository){
+      /**
+       * 'childPath' is the relative path for a file from within 'parent'
+       * Returns an absolute path
+       */
+      function makeAbsolutePath (childPath, parent) {
+        // join paths directly if parent path ends with '/', else join using '/'
+        return [parent.path, childPath].join(parent.path.slice(-1) === '/' ? '' : '/');
+      }
+
+      function isRelativePath (path) {
+        return path.charAt(0) !== '/';
       }
 
       return {
-        restrict: 'A',
-        link: function(scope, elm) {
-          var path = elm[0].innerText;
+        restrict: 'C',
+        link: function(scope, element) {
+          var path = element[0].innerText;
 
-          // convert to absolute pathnames
-          if (path.charAt(0) !== '/') {
-            path = relativeToAbsolutePath(path, ramlRepository.getParent($rootScope.fileBrowser.selectedFile));
+          if (isRelativePath(path)) {
+            path = makeAbsolutePath(path, ramlRepository.getParent($rootScope.fileBrowser.selectedFile));
           }
 
-          var action = 'fileBrowser.selectWithPath("' + path + '")';
-          elm.attr('ng-click', action);
-          elm.removeAttr('raml-editor-include-link');
-          $compile(elm)(scope);
+          // check if the altKey is pressed when the link is click
+          // if so, proceed to opening the file
+          scope.checkAndOpen = function (clickEvent, path) {
+            if (clickEvent.altKey) {
+              $rootScope.fileBrowser.selectWithPath(path);
+            }
+          };
+
+          // replace the original content with a clickable link
+          var template = '<span ng-click="checkAndOpen($event,\'' + path + '\')">' + element[0].innerText + '</span>';
+          element.html('').append($compile(template)(scope));
         }
       };
     })
@@ -52,7 +65,7 @@
               stream.skipToEnd();
               // reset the state
               state.foundInclude = false;
-              return 'include-path';
+              return 'include-link';
             }
 
             if (stream.match('!include')) {

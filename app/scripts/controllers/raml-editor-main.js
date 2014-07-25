@@ -89,14 +89,9 @@
         return 'Error on line ' + (actualLine + 1) + ': ' + message;
       }
 
-      function enableIncludeLinks () {
-        var includeLinks = document.getElementsByClassName('cm-include-path');
-
-        // attach raml-include-link directive to the elements
-        for (var i = 0; i < includeLinks.length; i++) {
-          includeLinks[i].setAttributeNode(document.createAttribute('raml-editor-include-link'));
-          $compile(includeLinks[i])($scope);
-        }
+      function compileLinkDirectives () {
+        var links = document.getElementsByClassName('cm-include-link');
+        $compile(links)($scope);
       }
 
       $window.setTheme = function setTheme(theme) {
@@ -302,7 +297,7 @@
 
         editor.on('change', debounce(function onChange() {
           $scope.sourceUpdated();
-          enableIncludeLinks();
+          compileLinkDirectives();
         }, config.get('updateResponsivenessInterval', UPDATE_RESPONSIVENESS_INTERVAL)));
 
         // Warn before leaving the page

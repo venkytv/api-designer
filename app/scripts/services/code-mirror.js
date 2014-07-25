@@ -216,6 +216,13 @@
         // for testing automation purposes
         editor = window.editor = cm;
 
+        // prevent the default code mirror event if altKey is pressed while clicking
+        editor.on('mousedown', function(cm, e) {
+          if (e.altKey) {
+            e.preventDefault();
+          }
+        });
+
         return cm;
       };
 
