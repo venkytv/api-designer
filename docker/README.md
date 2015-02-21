@@ -20,6 +20,18 @@ To stop the application:
 
     $ docker stop api-designer
 
+Accessing it in your browser:
+
+* On Linux, browse to [http://localhost:9013](http://localhost:9013)
+* On Mac and Windows, use http://192.168.59.103:9013
+
+_In case you are are unable to access the api-console on Mac or Windows, make
+sure that the VM IP has not changed using the `boot2docker` command._
+```
+    $ boot2docker ip
+    192.168.59.103
+```
+
 ## Debugging
 
 You can examine the logs on a running instance using `docker logs`:
